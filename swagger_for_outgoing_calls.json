@@ -1,0 +1,1620 @@
+{
+    "swagger": "2.0",
+    "basePath": "/",
+    "paths": {
+        "/api/activation/activate/{token}": {
+            "parameters": [
+                {
+                    "name": "token",
+                    "in": "path",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "operationId": "post_activate_employee",
+                "tags": [
+                    "activation"
+                ]
+            }
+        },
+        "/api/auth/employee/login": {
+            "post": {
+                "responses": {
+                    "401": {
+                        "description": "Invalid credentials"
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "200": {
+                        "description": "Login successful",
+                        "schema": {
+                            "$ref": "#/definitions/Token"
+                        }
+                    }
+                },
+                "summary": "Login for employees",
+                "operationId": "post_employee_login",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/EmployeeLogin"
+                        }
+                    }
+                ],
+                "tags": [
+                    "auth"
+                ]
+            }
+        },
+        "/api/auth/refresh": {
+            "post": {
+                "responses": {
+                    "401": {
+                        "description": "Invalid refresh token"
+                    },
+                    "200": {
+                        "description": "Token refreshed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/Token"
+                        }
+                    }
+                },
+                "summary": "Refresh access token",
+                "operationId": "post_token_refresh",
+                "tags": [
+                    "auth"
+                ]
+            }
+        },
+        "/api/employees/": {
+            "post": {
+                "responses": {
+                    "400": {
+                        "description": "Validation Error"
+                    },
+                    "201": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/Employee"
+                        }
+                    }
+                },
+                "summary": "Create a new employee (Admin only)",
+                "operationId": "post_employee_list",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/Employee"
+                        }
+                    },
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employees"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Employee"
+                            }
+                        }
+                    }
+                },
+                "summary": "Get all employees (Admin and Employer only)",
+                "operationId": "get_employee_list",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employees"
+                ]
+            }
+        },
+        "/api/employees/{employee_id}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "The employee identifier",
+                    "name": "employee_id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "delete": {
+                "responses": {
+                    "404": {
+                        "description": "Employee not found"
+                    },
+                    "204": {
+                        "description": "Employee successfully deleted"
+                    }
+                },
+                "summary": "Delete an employee (Admin only)",
+                "operationId": "delete_employee_resource",
+                "tags": [
+                    "employees"
+                ]
+            },
+            "patch": {
+                "responses": {
+                    "404": {
+                        "description": "Employee not found"
+                    },
+                    "400": {
+                        "description": "Validation Error"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/Employee"
+                        }
+                    }
+                },
+                "summary": "Update an employee (partial update)",
+                "operationId": "patch_employee_resource",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/Employee"
+                        }
+                    },
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employees"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "404": {
+                        "description": "Employee not found"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/DetailedEmployee"
+                        }
+                    }
+                },
+                "summary": "Get a specific employee by ID",
+                "operationId": "get_employee_resource",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employees"
+                ]
+            },
+            "put": {
+                "responses": {
+                    "404": {
+                        "description": "Employee not found"
+                    },
+                    "400": {
+                        "description": "Validation Error"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/Employee"
+                        }
+                    }
+                },
+                "summary": "Update an employee (full update)",
+                "operationId": "put_employee_resource",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/Employee"
+                        }
+                    },
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employees"
+                ]
+            }
+        },
+        "/api/employees/{employee_id}/projects": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "The employee identifier",
+                    "name": "employee_id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "delete": {
+                "responses": {
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "204": {
+                        "description": "Project successfully unassigned"
+                    }
+                },
+                "summary": "Unassign a project from an employee (Admin or Employer only)",
+                "description": "Unassign a project from an employee",
+                "operationId": "delete_employee_projects",
+                "tags": [
+                    "employees"
+                ]
+            },
+            "post": {
+                "responses": {
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "400": {
+                        "description": "Validation Error"
+                    },
+                    "201": {
+                        "description": "Project successfully assigned"
+                    }
+                },
+                "summary": "Assign a project to an employee (Admin or the employee themselves)",
+                "description": "Assign a project to an employee",
+                "operationId": "post_employee_projects",
+                "tags": [
+                    "employees"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "404": {
+                        "description": "Employee not found"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ProjectSummary"
+                            }
+                        }
+                    }
+                },
+                "summary": "Get all projects for an employee",
+                "operationId": "get_employee_projects",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employees"
+                ]
+            }
+        },
+        "/api/employees/{employee_id}/tasks": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "The employee identifier",
+                    "name": "employee_id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "delete": {
+                "responses": {
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "204": {
+                        "description": "Task successfully unassigned"
+                    }
+                },
+                "summary": "Unassign a task from an employee (Admin or Employer only)",
+                "description": "Unassign a task from an employee",
+                "operationId": "delete_employee_tasks",
+                "tags": [
+                    "employees"
+                ]
+            },
+            "post": {
+                "responses": {
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "400": {
+                        "description": "Validation Error"
+                    },
+                    "201": {
+                        "description": "Task successfully assigned"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/TaskAssignment"
+                        }
+                    }
+                },
+                "summary": "Assign a task to an employee (Admin or the employee themselves)",
+                "description": "Assign a task to an employee",
+                "operationId": "post_employee_tasks",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/TaskAssignment"
+                        }
+                    },
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employees"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "404": {
+                        "description": "Employee not found"
+                    }
+                },
+                "summary": "Multi-role endpoint (employees and employers)",
+                "description": "This endpoint can be accessed by both employees and employers",
+                "operationId": "get_employee_tasks",
+                "tags": [
+                    "employees"
+                ]
+            }
+        },
+        "/api/employers/profile": {
+            "get": {
+                "responses": {
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/Employer"
+                        }
+                    }
+                },
+                "summary": "Get employer profile",
+                "operationId": "get_employer_profile",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employers"
+                ]
+            },
+            "put": {
+                "responses": {
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/Employer"
+                        }
+                    }
+                },
+                "summary": "Update employer profile",
+                "operationId": "put_employer_profile",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/EmployerUpdate"
+                        }
+                    },
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employers"
+                ]
+            }
+        },
+        "/api/employers/projects": {
+            "post": {
+                "responses": {
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "201": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/Project"
+                        }
+                    }
+                },
+                "summary": "Create a new project",
+                "operationId": "post_employer_projects",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/ProjectInput"
+                        }
+                    },
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employers"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Project"
+                            }
+                        }
+                    }
+                },
+                "summary": "Get all projects for the employer",
+                "operationId": "get_employer_projects",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employers"
+                ]
+            }
+        },
+        "/api/employers/projects/{project_id}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "The project identifier",
+                    "name": "project_id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "delete": {
+                "responses": {
+                    "404": {
+                        "description": "Project not found"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "204": {
+                        "description": "Project deleted"
+                    }
+                },
+                "summary": "Delete a project",
+                "operationId": "delete_employer_project_detail",
+                "tags": [
+                    "employers"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "404": {
+                        "description": "Project not found"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/ProjectDetail"
+                        }
+                    }
+                },
+                "summary": "Get details of a specific project",
+                "operationId": "get_employer_project_detail",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employers"
+                ]
+            },
+            "put": {
+                "responses": {
+                    "404": {
+                        "description": "Project not found"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/Project"
+                        }
+                    }
+                },
+                "summary": "Update a project",
+                "operationId": "put_employer_project_detail",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/ProjectInput"
+                        }
+                    },
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employers"
+                ]
+            }
+        },
+        "/api/employers/projects/{project_id}/tasks": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "The project identifier",
+                    "name": "project_id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "post": {
+                "responses": {
+                    "404": {
+                        "description": "Project not found"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "201": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/Task"
+                        }
+                    }
+                },
+                "summary": "Create a new task for a project",
+                "operationId": "post_project_tasks",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/TaskInput"
+                        }
+                    },
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employers"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "404": {
+                        "description": "Project not found"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Task"
+                            }
+                        }
+                    }
+                },
+                "summary": "Get all tasks for a project",
+                "operationId": "get_project_tasks",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employers"
+                ]
+            }
+        },
+        "/api/employers/projects/{project_id}/tasks/{task_id}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "The task identifier",
+                    "name": "task_id",
+                    "required": true,
+                    "type": "integer"
+                },
+                {
+                    "in": "path",
+                    "description": "The project identifier",
+                    "name": "project_id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "delete": {
+                "responses": {
+                    "404": {
+                        "description": "Task not found or access denied"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "204": {
+                        "description": "Task deleted"
+                    }
+                },
+                "summary": "Delete a task",
+                "operationId": "delete_project_task_detail",
+                "tags": [
+                    "employers"
+                ]
+            },
+            "put": {
+                "responses": {
+                    "404": {
+                        "description": "Task not found or access denied"
+                    },
+                    "403": {
+                        "description": "Not authorized"
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/Task"
+                        }
+                    }
+                },
+                "summary": "Update a task",
+                "operationId": "put_project_task_detail",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/TaskInput"
+                        }
+                    },
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "employers"
+                ]
+            }
+        },
+        "/api/projects/": {
+            "post": {
+                "responses": {
+                    "201": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/Project"
+                        }
+                    }
+                },
+                "summary": "Create a new project",
+                "operationId": "post_project_list",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/Project"
+                        }
+                    },
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "projects"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Project"
+                            }
+                        }
+                    }
+                },
+                "summary": "Get all projects",
+                "operationId": "get_project_list",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "projects"
+                ]
+            }
+        },
+        "/api/timelogs/": {
+            "post": {
+                "responses": {
+                    "201": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/TimeLog"
+                        }
+                    }
+                },
+                "summary": "Create a new time log (optionally with screenshot upload)",
+                "operationId": "post_time_log_list",
+                "parameters": [
+                    {
+                        "name": "task_id",
+                        "in": "query",
+                        "type": "integer",
+                        "required": true,
+                        "description": "Task ID"
+                    },
+                    {
+                        "name": "project_id",
+                        "in": "query",
+                        "type": "integer",
+                        "required": true,
+                        "description": "Project ID"
+                    },
+                    {
+                        "name": "start_time",
+                        "in": "query",
+                        "type": "number",
+                        "required": true,
+                        "description": "Start time as UNIX timestamp (seconds)"
+                    },
+                    {
+                        "name": "end_time",
+                        "in": "query",
+                        "type": "number",
+                        "required": true,
+                        "description": "End time as UNIX timestamp (seconds)"
+                    },
+                    {
+                        "name": "duration",
+                        "in": "query",
+                        "type": "number",
+                        "required": true,
+                        "description": "Duration in seconds"
+                    },
+                    {
+                        "name": "is_screenshot_permission_enabled",
+                        "in": "query",
+                        "type": "boolean"
+                    },
+                    {
+                        "name": "ip_address",
+                        "in": "query",
+                        "type": "string"
+                    },
+                    {
+                        "name": "mac_address",
+                        "in": "query",
+                        "type": "string"
+                    },
+                    {
+                        "name": "file",
+                        "in": "formData",
+                        "type": "file",
+                        "description": "Screenshot image file"
+                    },
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "tags": [
+                    "timelogs"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/TimeLog"
+                            }
+                        }
+                    }
+                },
+                "summary": "Get all time logs",
+                "operationId": "get_time_log_list",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "tags": [
+                    "timelogs"
+                ]
+            }
+        }
+    },
+    "info": {
+        "title": "RESTx API",
+        "version": "1.0"
+    },
+    "produces": [
+        "application/json"
+    ],
+    "consumes": [
+        "application/json"
+    ],
+    "tags": [
+        {
+            "name": "users",
+            "description": "User operations"
+        },
+        {
+            "name": "projects",
+            "description": "Project operations"
+        },
+        {
+            "name": "employees",
+            "description": "Employee operations"
+        },
+        {
+            "name": "tasks",
+            "description": "Task operations"
+        },
+        {
+            "name": "timelogs",
+            "description": "Time Log operations"
+        },
+        {
+            "name": "auth",
+            "description": "Authentication operations"
+        },
+        {
+            "name": "employers",
+            "description": "Employer operations"
+        },
+        {
+            "name": "invite",
+            "description": "Employee Invitation"
+        },
+        {
+            "name": "activation",
+            "description": "Account Activation"
+        }
+    ],
+    "definitions": {
+        "User": {
+            "required": [
+                "username"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "Project": {
+            "allOf": [
+                {
+                    "$ref": "#/definitions/ProjectInput"
+                },
+                {
+                    "properties": {
+                        "id": {
+                            "type": "integer",
+                            "description": "Project ID"
+                        },
+                        "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Creation timestamp"
+                        },
+                        "updated_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Last update timestamp"
+                        },
+                        "employee_count": {
+                            "type": "integer",
+                            "description": "Number of assigned employees"
+                        }
+                    },
+                    "type": "object"
+                }
+            ]
+        },
+        "ProjectInput": {
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Project name"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Project description"
+                },
+                "hourly_rate": {
+                    "type": "number",
+                    "description": "Hourly rate"
+                }
+            },
+            "type": "object"
+        },
+        "Employee": {
+            "required": [
+                "email",
+                "name"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Employee name"
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Employee email"
+                },
+                "role": {
+                    "type": "string",
+                    "description": "Employee role"
+                },
+                "username": {
+                    "type": "string",
+                    "description": "Employee username"
+                }
+            },
+            "type": "object"
+        },
+        "DetailedEmployee": {
+            "allOf": [
+                {
+                    "$ref": "#/definitions/Employee"
+                },
+                {
+                    "properties": {
+                        "projects": {
+                            "type": "array",
+                            "description": "Projects assigned to employee",
+                            "items": {
+                                "$ref": "#/definitions/ProjectSummary"
+                            }
+                        },
+                        "tasks": {
+                            "type": "array",
+                            "description": "Tasks assigned to employee",
+                            "items": {
+                                "$ref": "#/definitions/TaskSummary"
+                            }
+                        }
+                    },
+                    "type": "object"
+                }
+            ]
+        },
+        "ProjectSummary": {
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Project name"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Project description"
+                },
+                "task_count": {
+                    "type": "integer",
+                    "description": "Number of tasks in the project"
+                }
+            },
+            "type": "object"
+        },
+        "TaskSummary": {
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "description": "Task ID"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Task name"
+                },
+                "status": {
+                    "type": "string",
+                    "description": "Task status"
+                }
+            },
+            "type": "object"
+        },
+        "TaskAssignment": {
+            "required": [
+                "employee_id",
+                "task_id"
+            ],
+            "properties": {
+                "task_id": {
+                    "type": "integer",
+                    "description": "Task ID to assign"
+                },
+                "employee_id": {
+                    "type": "integer",
+                    "description": "Employee ID to assign to"
+                }
+            },
+            "type": "object"
+        },
+        "Task": {
+            "allOf": [
+                {
+                    "$ref": "#/definitions/TaskInput"
+                },
+                {
+                    "properties": {
+                        "id": {
+                            "type": "integer",
+                            "description": "Task ID"
+                        },
+                        "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Creation timestamp"
+                        },
+                        "updated_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Last update timestamp"
+                        }
+                    },
+                    "type": "object"
+                }
+            ]
+        },
+        "TaskInput": {
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Task name"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Task description"
+                },
+                "status": {
+                    "type": "string",
+                    "description": "Task status",
+                    "example": "pending",
+                    "enum": [
+                        "pending",
+                        "in_progress",
+                        "completed",
+                        "on_hold"
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "TimeLog": {
+            "required": [
+                "employee_id",
+                "project_id",
+                "task_id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "employee_id": {
+                    "type": "integer"
+                },
+                "task_id": {
+                    "type": "integer"
+                },
+                "project_id": {
+                    "type": "integer"
+                },
+                "start_time": {
+                    "type": "string"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "duration": {
+                    "type": "number"
+                },
+                "is_screenshot_permission_enabled": {
+                    "type": "boolean"
+                },
+                "ip_address": {
+                    "type": "string"
+                },
+                "mac_address": {
+                    "type": "string"
+                },
+                "file_path": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "captured_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the screenshot was taken"
+                }
+            },
+            "type": "object"
+        },
+        "EmployeeRegister": {
+            "required": [
+                "email",
+                "name",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "username": {
+                    "type": "string",
+                    "description": "Employee username"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Employee name"
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Employee email"
+                },
+                "password": {
+                    "type": "string",
+                    "description": "Employee password"
+                }
+            },
+            "type": "object"
+        },
+        "EmployeeLogin": {
+            "required": [
+                "mac_address",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "username": {
+                    "type": "string",
+                    "description": "Employee username"
+                },
+                "password": {
+                    "type": "string",
+                    "description": "Employee password"
+                },
+                "mac_address": {
+                    "type": "string",
+                    "description": "Employee mac address"
+                }
+            },
+            "type": "object"
+        },
+        "Token": {
+            "properties": {
+                "access_token": {
+                    "type": "string",
+                    "description": "JWT access token"
+                },
+                "refresh_token": {
+                    "type": "string",
+                    "description": "JWT refresh token"
+                },
+                "user_type": {
+                    "type": "string",
+                    "description": "Type of user (employee, employer, or admin)"
+                },
+                "user_id": {
+                    "type": "integer",
+                    "description": "User ID"
+                }
+            },
+            "type": "object"
+        },
+        "EmployerRegister": {
+            "required": [
+                "company_name",
+                "contact_name",
+                "email",
+                "password"
+            ],
+            "properties": {
+                "company_name": {
+                    "type": "string",
+                    "description": "Company name"
+                },
+                "contact_name": {
+                    "type": "string",
+                    "description": "Contact person name"
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Employer email"
+                },
+                "phone": {
+                    "type": "string",
+                    "description": "Contact phone number"
+                },
+                "password": {
+                    "type": "string",
+                    "description": "Employer password"
+                },
+                "website": {
+                    "type": "string",
+                    "description": "Company website"
+                },
+                "address": {
+                    "type": "string",
+                    "description": "Company address"
+                }
+            },
+            "type": "object"
+        },
+        "EmployerLogin": {
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "description": "Employer email"
+                },
+                "password": {
+                    "type": "string",
+                    "description": "Employer password"
+                }
+            },
+            "type": "object"
+        },
+        "AdminLogin": {
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "description": "Admin email"
+                },
+                "password": {
+                    "type": "string",
+                    "description": "Admin password"
+                }
+            },
+            "type": "object"
+        },
+        "EmployerUpdate": {
+            "properties": {
+                "company_name": {
+                    "type": "string",
+                    "description": "Company name"
+                },
+                "contact_name": {
+                    "type": "string",
+                    "description": "Contact person name"
+                },
+                "phone": {
+                    "type": "string",
+                    "description": "Contact phone number"
+                },
+                "profile_image_url": {
+                    "type": "string",
+                    "description": "Profile image URL"
+                },
+                "address": {
+                    "type": "string",
+                    "description": "Company address"
+                },
+                "website": {
+                    "type": "string",
+                    "description": "Company website"
+                },
+                "password": {
+                    "type": "string",
+                    "description": "New password"
+                }
+            },
+            "type": "object"
+        },
+        "Employer": {
+            "required": [
+                "company_name",
+                "contact_name",
+                "email"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "description": "Employer ID"
+                },
+                "company_name": {
+                    "type": "string",
+                    "description": "Company name"
+                },
+                "contact_name": {
+                    "type": "string",
+                    "description": "Contact person name"
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Employer email"
+                },
+                "phone": {
+                    "type": "string",
+                    "description": "Contact phone number"
+                },
+                "active": {
+                    "type": "boolean",
+                    "description": "Account status"
+                },
+                "profile_image_url": {
+                    "type": "string",
+                    "description": "Profile image URL"
+                },
+                "address": {
+                    "type": "string",
+                    "description": "Company address"
+                },
+                "website": {
+                    "type": "string",
+                    "description": "Company website"
+                }
+            },
+            "type": "object"
+        },
+        "ProjectDetail": {
+            "allOf": [
+                {
+                    "$ref": "#/definitions/Project"
+                },
+                {
+                    "properties": {
+                        "employees": {
+                            "type": "array",
+                            "description": "Assigned employees",
+                            "items": {
+                                "$ref": "#/definitions/EmployeeSummary"
+                            }
+                        },
+                        "tasks": {
+                            "type": "array",
+                            "description": "Project tasks",
+                            "items": {
+                                "$ref": "#/definitions/TaskSummary"
+                            }
+                        }
+                    },
+                    "type": "object"
+                }
+            ]
+        },
+        "EmployeeSummary": {
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "description": "Employee ID"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Employee name"
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Employee email"
+                }
+            },
+            "type": "object"
+        }
+    },
+    "responses": {
+        "ParseError": {
+            "description": "When a mask can't be parsed"
+        },
+        "MaskError": {
+            "description": "When any error occurs on mask"
+        }
+    }
+}
