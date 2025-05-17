@@ -9,7 +9,7 @@ from PySide6.QtCore import QTimer, Signal, Qt, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QFont, QIcon, QColor
 from .styles import WINDOW_STYLE, TITLE_STYLE, SUBTITLE_STYLE, TEXT_STYLE, LIGHT_OLIVE, OLIVE, PEACH, CREAM
 from .api_service import APIService
-from .constants import TIMELOG_INTERVAL_SECONDS
+from .constants import TIMELOG_INTERVAL_SECONDS, PROGRESS_BAR_FOR_SESSION
 
 class TimerWindow(QWidget):
     switch_task = Signal()
@@ -23,10 +23,10 @@ class TimerWindow(QWidget):
         self.timelog_timer = None
         self.timer_running = False
         self.elapsed_time = 0
-        self.session_goal = 3600  # Default session goal (1 hour)
+        self.session_goal = PROGRESS_BAR_FOR_SESSION  # Default session goal (1 hour)
         self.start_time = None
         self.last_timelog_time = None
-        self.screenshot_interval = 10  # Seconds between screenshots for testing (change to desired value)
+        self.screenshot_interval = TIMELOG_INTERVAL_SECONDS  # Using the constant from constants.py
         self.screenshots_folder = "screenshots"
         self.init_ui()
         self.setup_connections()

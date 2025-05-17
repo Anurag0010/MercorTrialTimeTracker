@@ -59,7 +59,7 @@ class MainWindow(QMainWindow):
     def update_dashboard(self, projects_data):
         """Update dashboard with fetched projects and tasks"""
         print(f"Updating dashboard with {len(projects_data)} projects")
-        self.dashboard_window.update_tasks(projects_data)
+        self.dashboard_window.update_projects(projects_data)
         
     def show_project_window(self):
         # Optionally refresh projects here:
@@ -71,6 +71,9 @@ class MainWindow(QMainWindow):
         project = selection.get('project')
         task = selection.get('task')
         self.timer_window = TimerWindow(project_data={'project': project, 'task': task}, api_service=self.api_service)
+        # Connect the switch_task signal from timer window
+        self.timer_window.switch_task.connect(self.handle_switch_task)
+        self.timer_window.logout_requested.connect(self.logout_user)
         self.stacked_widget.addWidget(self.timer_window)
         self.stacked_widget.setCurrentWidget(self.timer_window)
         # Optionally, call a start method on TimerWindow if needed
@@ -79,6 +82,9 @@ class MainWindow(QMainWindow):
         """Show timer window for the selected task"""
         print(f"Starting timer for {project_data}")
         self.timer_window = TimerWindow(project_data, api_service=self.api_service)
+        # Connect the switch_task signal from timer window
+        self.timer_window.switch_task.connect(self.handle_switch_task)
+        self.timer_window.logout_requested.connect(self.logout_user)
         self.stacked_widget.addWidget(self.timer_window)
         self.stacked_widget.setCurrentWidget(self.timer_window)
         # Start the timer automatically
@@ -99,6 +105,8 @@ class MainWindow(QMainWindow):
         self.stacked_widget.setCurrentWidget(self.auth_window)
 
     def handle_switch_task(self):
+        """Handle switch task request from timer window"""
+        print("Switching task - returning to dashboard")
         # Return to dashboard when switching tasks
         self.show_dashboard_window()
         

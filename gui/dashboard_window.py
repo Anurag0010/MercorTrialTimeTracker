@@ -27,12 +27,16 @@ class TaskCard(QFrame):
 
         # Display task name
         project_name = self.task_data.get('project_name', 'Unnamed Project')
-        task_name = QLabel(f"{project_name} -> {self.task_data.get('name', 'Unnamed Task')}")
+        task_name = QLabel(f"{project_name}")
         task_name.setStyleSheet(f"color: {PRIMARY}; font-weight: 700; font-size: 18px; letter-spacing: 0.3px;")
         
         # Display hours if available or default to 0
-        hours = self.task_data.get('estimated_hours', 0)
-        hours_label = QLabel(f"{hours} hours")
+        mins = self.task_data.get('task_spent_time_in_minutes_real', 0)
+        
+        # convert to x hours and y minutes
+        hours = mins // 60
+        minutes = mins % 60
+        hours_label = QLabel(f"{hours} hours and {minutes} minutes")
         hours_label.setStyleSheet(f"color: {ACCENT}; font-size: 14px; font-weight: 600;")
         
         # Add status or other info if available
