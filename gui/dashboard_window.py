@@ -1,9 +1,8 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QPushButton, QScrollArea, QFrame, QHBoxLayout, 
                           QSpacerItem, QSizePolicy, QGridLayout)
-from PySide6.QtCore import Signal, Qt, QSize
-from PySide6.QtGui import QIcon, QPixmap, QColor
+from PySide6.QtCore import Signal, Qt
 from functools import partial
-from .styles import OLIVE, LIGHT_OLIVE, CREAM, PEACH, WINDOW_STYLE, TITLE_STYLE, SUBTITLE_STYLE, TEXT_STYLE
+from .styles import OLIVE, WINDOW_STYLE, TITLE_STYLE, SUBTITLE_STYLE, TEXT_STYLE, PRIMARY, SECONDARY, TERTIARY, DARK_PRIMARY, LIGHT_PRIMARY, SUCCESS, WARNING, DANGER, INFO, WHITE, GRAY, DARK_GRAY, BLACK, CARD_STYLE, SHADOW
 from .api_service import APIService
 
 class TaskCard(QFrame):
@@ -15,44 +14,88 @@ class TaskCard(QFrame):
         self.init_ui()
     
     def init_ui(self):
-        from .styles import CARD_STYLE, PRIMARY, ACCENT, TEXT_STYLE
-        self.setStyleSheet(CARD_STYLE)
+        from .styles import CARD_STYLE, PRIMARY, TEXT_STYLE
+        self.setStyleSheet(f"""
+            QFrame {{
+                background-color: {WHITE};
+                border-radius: 12px;
+                border: 1px solid {LIGHT_PRIMARY};
+                box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.08);
+            }}
+            QFrame:hover {{
+                border: 1px solid {PRIMARY};
+                background-color: rgba(224, 231, 255, 0.2);
+            }}
+        """)
         layout = QHBoxLayout()
-        layout.setSpacing(18)
-        layout.setContentsMargins(22, 14, 22, 14)
+        layout.setSpacing(12)
+        layout.setContentsMargins(16, 12, 16, 12)
 
         # Task info
         info_layout = QVBoxLayout()
-        info_layout.setSpacing(2)
+        info_layout.setSpacing(4)
 
         # Display task name
-        project_name = self.task_data.get('project_name', 'Unnamed Project')
-        task_name = QLabel(f"{project_name}")
-        task_name.setStyleSheet(f"color: {PRIMARY}; font-weight: 700; font-size: 18px; letter-spacing: 0.3px;")
+        task_name = self.task_data.get('name', 'Unnamed Task')
+        task_label = QLabel(f"Task: {task_name}")
+        task_label.setStyleSheet(f"color: {PRIMARY}; font-weight: 700; font-size: 16px; letter-spacing: 0.3px;")
+        
+        # Time container
+        time_container = QHBoxLayout()
+        time_container.setSpacing(2)
         
         # Display hours if available or default to 0
         mins = self.task_data.get('task_spent_time_in_minutes_real', 0)
         
-        # convert to x hours and y minutes
+        # Make sure mins is a whole number integer
+        if isinstance(mins, float):
+            mins = int(mins)
+        
+        # Format as HH:mm with whole numbers
         hours = mins // 60
         minutes = mins % 60
-        hours_label = QLabel(f"{hours} hours and {minutes} minutes")
-        hours_label.setStyleSheet(f"color: {ACCENT}; font-size: 14px; font-weight: 600;")
+        time_icon = QLabel("🕒")
+        time_icon.setStyleSheet(f"font-size: 12px; margin-right: 4px;")
+        time_label = QLabel(f"{int(hours):02d}:{int(minutes):02d}")
+        time_label.setStyleSheet(f"""
+            color: {SECONDARY}; 
+            font-size: 13px; 
+            font-weight: 500;
+            background-color: rgba(224, 231, 255, 0.4);
+            border-radius: 6px;
+            padding: 2px 6px;
+        """)
         
-        # Add status or other info if available
-        if 'status' in self.task_data:
-            status_label = QLabel(f"Status: {self.task_data['status']}")
-            status_label.setStyleSheet(f"color: {ACCENT}; font-size: 14px;")
-            info_layout.addWidget(status_label)
-            
-        info_layout.addWidget(task_name)
-        info_layout.addWidget(hours_label)
+        time_container.addWidget(time_icon)
+        time_container.addWidget(time_label)
+        time_container.addStretch()
+        
+        info_layout.addWidget(task_label)
+        info_layout.addLayout(time_container)
 
         # Track button
-        track_btn = QPushButton('Track')
-        track_btn.setFixedSize(112, 40)
+        track_btn = QPushButton('Start')
+        track_btn.setFixedSize(70, 32)
         track_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        track_btn.setStyleSheet('font-size: 16px; font-weight: 700;')
+        track_btn.setStyleSheet(f'''
+            QPushButton {{
+                background-color: {PRIMARY};
+                color: {WHITE};
+                border: none;
+                border-radius: 6px;
+                padding: 4px;
+                font-size: 12px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                background-color: {DARK_PRIMARY};
+                transform: translateY(-1px);
+            }}
+            QPushButton:pressed {{
+                background-color: {DARK_PRIMARY};
+                transform: translateY(1px);
+            }}
+        ''')
         track_btn.clicked.connect(self.on_track_clicked)
 
         layout.addLayout(info_layout, 1)
@@ -70,47 +113,80 @@ class ProjectTaskCard(QFrame):
     def init_ui(self):
         self.setStyleSheet(f"""
             QFrame {{
-                background-color: {LIGHT_OLIVE};
+                background-color: {WHITE};
                 border-radius: 16px;
-                padding: 5px;
-                box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+                border: 1px solid rgba(99, 102, 241, 0.1);
+                box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
+            }}
+            QFrame:hover {{
+                box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.12);
             }}
         """)
         
         layout = QVBoxLayout()
         layout.setSpacing(12)
-        layout.setContentsMargins(20, 15, 20, 15)
+        layout.setContentsMargins(20, 20, 20, 20)
         
         # Project header with icon
         header_layout = QHBoxLayout()
+        
+        # Project icon
+        icon_label = QLabel("📂")
+        icon_label.setStyleSheet("font-size: 20px; margin-right: 8px;")
+        
         # Get project name or use 'Unnamed Project' as fallback
         project_name = self.project_task_data[0]
-        project_title = QLabel(project_name)
+        project_title = QLabel(f"Project: {project_name}")
         project_title.setStyleSheet(f"""
-            font-size: 22px;
-            font-weight: bold;
-            color: {OLIVE};
+            font-size: 20px;
+            font-weight: 800;
+            color: {PRIMARY};
             letter-spacing: 0.5px;
         """)
         
+        header_layout.addWidget(icon_label)
         header_layout.addWidget(project_title)
         header_layout.addStretch(1)
         
+        # Add task count badge
+        tasks = self.project_task_data[1]
+        task_count = len(tasks) if tasks else 0
+        task_count_label = QLabel(f"{task_count} task{'s' if task_count != 1 else ''}")
+        task_count_label.setStyleSheet(f"""
+            background-color: {LIGHT_PRIMARY};
+            color: {PRIMARY};
+            border-radius: 10px;
+            padding: 4px 10px;
+            font-size: 13px;
+            font-weight: 600;
+        """)
+        header_layout.addWidget(task_count_label)
+        
         layout.addLayout(header_layout)
         
+        # Add separator line
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.HLine)
+        separator.setStyleSheet(f"background-color: rgba(99, 102, 241, 0.1); margin: 4px 0px 8px 0px; min-height: 1px; max-height: 1px;")
+        layout.addWidget(separator)
+        
         # Tasks
-        tasks = self.project_task_data[1]
         if tasks:
+            tasks_container = QVBoxLayout()
+            tasks_container.setSpacing(8)
+            
             for task in tasks:
                 task_card = TaskCard(
                     task, 
                     partial(self.on_task_clicked, self.project_task_data, task)
                 )
-                layout.addWidget(task_card)
+                tasks_container.addWidget(task_card)
+                
+            layout.addLayout(tasks_container)
         else:
             # Show message if no tasks
             no_tasks = QLabel("No tasks assigned to this project")
-            no_tasks.setStyleSheet(f"color: {OLIVE}; font-style: italic;")
+            no_tasks.setStyleSheet(f"color: {DARK_GRAY}; font-style: italic; padding: 10px;")
             no_tasks.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(no_tasks)
         
@@ -143,7 +219,7 @@ class DashboardWindow(QWidget):
         # Header Bar with shadow effect
         header = QFrame()
         header.setStyleSheet(f"""
-            background: {OLIVE}; 
+            background: {LIGHT_PRIMARY}; 
             border-bottom-left-radius: 20px; 
             border-bottom-right-radius: 20px;
             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
@@ -155,7 +231,7 @@ class DashboardWindow(QWidget):
         
         logo = QLabel("🕒 Time Tracker")
         logo.setStyleSheet(f"""
-            color: {CREAM}; 
+            color: {PRIMARY}; 
             font-size: 28px; 
             font-weight: bold;
             letter-spacing: 0.8px;
@@ -166,7 +242,7 @@ class DashboardWindow(QWidget):
         
         user = QLabel("👤 User")
         user.setStyleSheet(f"""
-            color: {CREAM}; 
+            color: {PRIMARY}; 
             font-size: 18px;
             background-color: rgba(255, 255, 255, 0.2);
             padding: 6px 12px;
@@ -191,7 +267,7 @@ class DashboardWindow(QWidget):
         # Add decorative line under title
         underline = QFrame()
         underline.setFrameShape(QFrame.Shape.HLine)
-        underline.setStyleSheet(f"background-color: {LIGHT_OLIVE}; min-height: 3px; max-height: 3px; border-radius: 1px; margin-left: 200px; margin-right: 200px;")
+        underline.setStyleSheet(f"background-color: {WHITE}; min-height: 3px; max-height: 3px; border-radius: 1px; margin-left: 200px; margin-right: 200px;")
         
         title_container.addWidget(title)
         title_container.addWidget(underline)
@@ -285,6 +361,10 @@ class DashboardWindow(QWidget):
                 
         self.scroll_layout.addWidget(error_label)
         self.scroll_layout.addSpacerItem(QSpacerItem(20, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
+
+    def update_projects(self, projects):
+        """Update the dashboard with projects data - alias for update_tasks for compatibility"""
+        self.update_tasks(projects)
 
     def dummy_projects(self):
         # Dummy data for demonstration

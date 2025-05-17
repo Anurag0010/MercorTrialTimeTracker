@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                                QComboBox, QPushButton, QFrame, QSpacerItem, QSizePolicy,
                                QMessageBox)
 from PySide6.QtCore import Signal, Qt
-from .styles import WINDOW_STYLE, TITLE_STYLE, SUBTITLE_STYLE, TEXT_STYLE, OLIVE, LIGHT_OLIVE, CREAM, PEACH
+from .styles import WINDOW_STYLE, TITLE_STYLE, SUBTITLE_STYLE, TEXT_STYLE, OLIVE, PRIMARY, WHITE, SECONDARY, CARD_STYLE, SHADOW
 from .api_service import APIService
 
 class  ProjectWindow(QWidget):
@@ -32,7 +32,7 @@ class  ProjectWindow(QWidget):
         main_layout.addSpacing(10)
 
         # Selection container
-        from .styles import CARD_STYLE, PRIMARY, ACCENT, TEXT_STYLE
+        from .styles import CARD_STYLE, PRIMARY, TEXT_STYLE
         selection_frame = QFrame()
         selection_frame.setStyleSheet(CARD_STYLE)
         selection_layout = QVBoxLayout()
@@ -72,8 +72,8 @@ class  ProjectWindow(QWidget):
         self.start_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.start_button.setStyleSheet(f"""
             QPushButton {{
-                background-color: {PEACH};
-                color: {OLIVE};
+                background-color: {SECONDARY};
+                color: {WHITE};
                 border: none;
                 border-radius: 12px;
                 padding: 12px;
@@ -83,7 +83,7 @@ class  ProjectWindow(QWidget):
                 min-height: 50px;
             }}
             QPushButton:hover {{
-                background-color: {LIGHT_OLIVE};
+                background-color: {PRIMARY};
                 color: white;
                 transform: scale(1.03);
             }}

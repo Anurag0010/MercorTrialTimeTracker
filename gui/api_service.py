@@ -12,6 +12,66 @@ import os
 
 import threading
 
+def with_retry(max_retries=3, delay=1.0, backoff=2.0, error_signal_name=None):
+    """
+    Decorator that implements retry logic for API calls.
+    
+    Args:
+        max_retries: Maximum number of retry attempts
+        delay: Initial delay between retries in seconds
+        backoff: Backoff multiplier for subsequent retries
+        error_signal_name: Name of the signal to emit if all retries fail
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            retries = 0
+            current_delay = delay
+            
+            while retries <= max_retries:
+                try:
+                    result = func(self, *args, **kwargs)
+                    if result is not None:  # None typically indicates failure
+                        return result
+                    
+                    # If we're here, the function returned None (failed)
+                    # but didn't raise an exception
+                    if retries == max_retries:
+                        break
+                        
+                    retries += 1
+                    print(f"API call failed, retrying ({retries}/{max_retries}) after {current_delay}s delay...")
+                    time.sleep(current_delay)
+                    current_delay *= backoff
+                    
+                except requests.exceptions.ConnectionError as e:
+                    if retries == max_retries:
+                        if error_signal_name and hasattr(self, error_signal_name):
+                            error_signal = getattr(self, error_signal_name)
+                            error_signal.emit(f"Connection error after {max_retries} retries: {str(e)}")
+                        return None
+                    
+                    retries += 1
+                    print(f"Connection error, retrying ({retries}/{max_retries}) after {current_delay}s delay...")
+                    time.sleep(current_delay)
+                    current_delay *= backoff
+                    
+                except Exception as e:
+                    # For other exceptions, don't retry
+                    if error_signal_name and hasattr(self, error_signal_name):
+                        error_signal = getattr(self, error_signal_name)
+                        error_signal.emit(f"Error in API call: {str(e)}")
+                    return None
+            
+            # If we've exhausted all retries
+            if error_signal_name and hasattr(self, error_signal_name):
+                error_signal = getattr(self, error_signal_name)
+                error_signal.emit(f"Failed after {max_retries} retry attempts")
+            return None
+            
+        return wrapper
+    return decorator
+
 class APIService(QObject):
     """Service to handle all API interactions with the backend (Singleton)"""
     
@@ -69,6 +129,7 @@ class APIService(QObject):
             return wrapper
         return decorator
     
+    @with_retry(max_retries=3, delay=1.0, backoff=2.0, error_signal_name="auth_error")
     def authenticate(self, username, password, mac_address):
         """Authenticate user with the backend API (OpenAPI: POST /api/auth/employee/login)"""
         try:
@@ -130,6 +191,7 @@ class APIService(QObject):
         return True
     
     @requires_auth(error_signal_name="projects_error")
+    @with_retry(max_retries=3, delay=1.0, backoff=2.0, error_signal_name="projects_and_tasks_error")
     def get_projects_and_tasks(self):
         """Fetch all projects and their tasks for the authenticated employee (GET /api/employees/projects)"""
         try:
@@ -156,6 +218,7 @@ class APIService(QObject):
             return None
     
     @requires_auth(error_signal_name="tasks_error")
+    @with_retry(max_retries=3, delay=1.0, backoff=2.0, error_signal_name="tasks_error")
     def get_tasks(self, project_id=None):
         """Fetch tasks for a specific project (OpenAPI: GET /api/projects/{project_id}/tasks)"""
         try:
@@ -185,6 +248,7 @@ class APIService(QObject):
             return None
     
     @requires_auth(error_signal_name="timelog_error")
+    @with_retry(max_retries=3, delay=1.0, backoff=2.0, error_signal_name="timelog_error")
     def post_timelog_with_screenshot(self, task_id, project_id, start_time, end_time, duration):
         """
         Post time tracking information and screenshot to the backend in a single API call.
@@ -192,18 +256,42 @@ class APIService(QObject):
         """
         # convert start and end_time to epoch time if not already
         if isinstance(start_time, str):
-            start_time = int(time.mktime(time.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f')))
+            try:
+                start_time = int(time.mktime(time.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%f')))
+            except ValueError:
+                try:
+                    # Try alternative format without microseconds
+                    start_time = int(time.mktime(time.strptime(start_time, '%Y-%m-%dT%H:%M:%S')))
+                except ValueError:
+                    self.timelog_error.emit("Invalid start time format")
+                    return False
+                    
         if isinstance(end_time, str):
-            end_time = int(time.mktime(time.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')))
+            try:
+                end_time = int(time.mktime(time.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%f')))
+            except ValueError:
+                try:
+                    # Try alternative format without microseconds
+                    end_time = int(time.mktime(time.strptime(end_time, '%Y-%m-%dT%H:%M:%S')))
+                except ValueError:
+                    self.timelog_error.emit("Invalid end time format")
+                    return False
+                    
         if isinstance(duration, str):
-            duration = int(duration)
+            try:
+                duration = int(duration)
+            except ValueError:
+                self.timelog_error.emit("Invalid duration format")
+                return False
+                
         if isinstance(duration, float):
             duration = int(duration)    
         try:
-            url = f"{BASE_URL}/api/timelogs"
+            url = f"{BASE_URL}/api/timelogs/"
 
             # 2. Check screenshot permission
             is_screenshot_permission_enabled = check_screenshot_permission()
+            screenshot_path = None
 
             if is_screenshot_permission_enabled:
                 # 1. Capture screenshot
@@ -219,9 +307,12 @@ class APIService(QObject):
             ip_address = ip_addresses.get("primary", "")
 
             # 4. Prepare multipart/form-data payload
-            files = {
-                'file': open(screenshot_path, 'rb')
-            }
+            files = {}
+            if screenshot_path and os.path.exists(screenshot_path):
+                files = {
+                    'file': open(screenshot_path, 'rb')
+                }
+                
             data = {
                 'task_id': task_id,
                 'project_id': project_id,
@@ -235,14 +326,16 @@ class APIService(QObject):
             headers = {
                 'Authorization': f'Bearer {self.access_token}'
             }
+            
             response = requests.post(url, data=data, files=files, headers=headers)
 
             # 5. Clean up screenshot file
-            try:
-                files['file'].close()
-                os.remove(screenshot_path)
-            except Exception:
-                pass
+            if screenshot_path and 'file' in files:
+                try:
+                    files['file'].close()
+                    os.remove(screenshot_path)
+                except Exception:
+                    pass
 
             if response.status_code in [200, 201]:
                 self.timelog_posted.emit(True)

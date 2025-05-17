@@ -9,7 +9,12 @@ import platform
 import re
 import subprocess
 import json
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any, Union
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("network_utils")
 
 def get_hostname() -> str:
     """
@@ -18,7 +23,13 @@ def get_hostname() -> str:
     Returns:
         str: The hostname of the current machine
     """
-    return socket.gethostname()
+    try:
+        hostname = socket.gethostname()
+        logger.debug(f"Hostname retrieved: {hostname}")
+        return hostname
+    except Exception as e:
+        logger.error(f"Error retrieving hostname: {str(e)}")
+        return "unknown-host"
 
 def get_ip_address() -> Dict[str, str]:
     """
@@ -31,64 +42,78 @@ def get_ip_address() -> Dict[str, str]:
     ip_addresses = {}
     
     # Get hostname
-    hostname = socket.gethostname()
-    
-    # Get all IP addresses associated with the hostname
     try:
-        # This gets all IPs for the local machine
-        for addrinfo in socket.getaddrinfo(hostname, None):
-            ip = addrinfo[4][0]
-            if not ip.startswith('127.') and ':' not in ip:  # Skip loopback and IPv6
-                ip_addresses["primary"] = ip
-                break
-    except:
-        pass
-    
-    # If no primary IP found, try a different approach
-    if "primary" not in ip_addresses:
+        hostname = socket.gethostname()
+        logger.debug(f"Hostname for IP lookup: {hostname}")
+        
+        # Get all IP addresses associated with the hostname
         try:
-            # Try to get the primary IP by connecting to an external server
-            # (doesn't actually establish a connection)
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            ip_addresses["primary"] = s.getsockname()[0]
-            s.close()
-        except:
-            ip_addresses["primary"] = "127.0.0.1"  # Fallback to localhost
-    
-    # Get more detailed info on Windows
-    if platform.system() == "Windows":
-        try:
-            # Run ipconfig and parse the output
-            output = subprocess.check_output("ipconfig /all", shell=True).decode('utf-8')
-            interfaces = re.split(r'\r?\nEthernet adapter |Wireless LAN adapter ', output)[1:]
-            
-            for interface in interfaces:
-                interface_lines = interface.split('\r\n')
-                interface_name = interface_lines[0].strip(':')
+            # This gets all IPs for the local machine
+            for addrinfo in socket.getaddrinfo(hostname, None):
+                ip = addrinfo[4][0]
+                if not ip.startswith('127.') and ':' not in ip:  # Skip loopback and IPv6
+                    ip_addresses["primary"] = ip
+                    logger.debug(f"Found primary IP from hostname: {ip}")
+                    break
+        except Exception as e:
+            logger.warning(f"Error getting IP addresses from hostname: {str(e)}")
+        
+        # If no primary IP found, try a different approach
+        if "primary" not in ip_addresses:
+            try:
+                # Try to get the primary IP by connecting to an external server
+                # (doesn't actually establish a connection)
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.settimeout(2.0)  # Set timeout to avoid hanging
+                s.connect(("8.8.8.8", 80))
+                ip_addresses["primary"] = s.getsockname()[0]
+                logger.debug(f"Found primary IP using socket connection: {ip_addresses['primary']}")
+                s.close()
+            except Exception as e:
+                logger.warning(f"Error getting primary IP via socket connection: {str(e)}")
+                ip_addresses["primary"] = "127.0.0.1"  # Fallback to localhost
+                logger.debug("Using fallback localhost IP")
+        
+        # Get more detailed info on Windows
+        if platform.system() == "Windows":
+            try:
+                # Run ipconfig and parse the output
+                logger.debug("Getting Windows network interfaces via ipconfig")
+                output = subprocess.check_output("ipconfig /all", shell=True).decode('utf-8')
+                interfaces = re.split(r'\r?\nEthernet adapter |Wireless LAN adapter ', output)[1:]
                 
-                ipv4_match = re.search(r'IPv4 Address.*: ([\d\.]+)', interface)
-                if ipv4_match:
-                    ip_addresses[interface_name] = ipv4_match.group(1)
-        except:
-            pass
-    
-    # Get more detailed info on macOS/Linux
-    elif platform.system() in ["Darwin", "Linux"]:
-        try:
-            # Run ifconfig and parse the output
-            output = subprocess.check_output(["ifconfig"], stderr=subprocess.STDOUT).decode('utf-8')
-            interfaces = re.split(r'\n(?=\w)', output)
-            
-            for interface in interfaces:
-                interface_match = re.match(r'^(\w+):', interface)
-                if interface_match:
-                    interface_name = interface_match.group(1)
-                    ipv4_match = re.search(r'inet ([\d\.]+)', interface)
-                    if ipv4_match and not ipv4_match.group(1).startswith('127.'):
+                for interface in interfaces:
+                    interface_lines = interface.split('\r\n')
+                    interface_name = interface_lines[0].strip(':')
+                    
+                    ipv4_match = re.search(r'IPv4 Address.*: ([\d\.]+)', interface)
+                    if ipv4_match:
                         ip_addresses[interface_name] = ipv4_match.group(1)
-        except:
-            pass
+                        logger.debug(f"Found Windows interface {interface_name} with IP {ipv4_match.group(1)}")
+            except Exception as e:
+                logger.warning(f"Error getting Windows network interfaces: {str(e)}")
+        
+        # Get more detailed info on macOS/Linux
+        elif platform.system() in ["Darwin", "Linux"]:
+            try:
+                # Run ifconfig and parse the output
+                logger.debug("Getting macOS/Linux network interfaces via ifconfig")
+                output = subprocess.check_output(["ifconfig"], stderr=subprocess.STDOUT).decode('utf-8')
+                interfaces = re.split(r'\n(?=\w)', output)
+                
+                for interface in interfaces:
+                    interface_match = re.match(r'^(\w+):', interface)
+                    if interface_match:
+                        interface_name = interface_match.group(1)
+                        ipv4_match = re.search(r'inet ([\d\.]+)', interface)
+                        if ipv4_match and not ipv4_match.group(1).startswith('127.'):
+                            ip_addresses[interface_name] = ipv4_match.group(1)
+                            logger.debug(f"Found Unix interface {interface_name} with IP {ipv4_match.group(1)}")
+            except Exception as e:
+                logger.warning(f"Error getting Unix network interfaces: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error in get_ip_address: {str(e)}")
+        ip_addresses["primary"] = "127.0.0.1"  # Ensure we have at least a fallback
     
     return ip_addresses
 
@@ -106,7 +131,7 @@ def get_mac_address() -> Dict[str, str]:
     try:
         mac = ':'.join(re.findall('..', '%012x' % uuid.getnode()))
         mac_addresses["primary"] = mac
-    except:
+    except Exception:
         mac_addresses["primary"] = "00:00:00:00:00:00"
     
     # Get more detailed info on Windows
@@ -123,7 +148,7 @@ def get_mac_address() -> Dict[str, str]:
                 mac_match = re.search(r'Physical Address.*: ([\dA-F]{2}-[\dA-F]{2}-[\dA-F]{2}-[\dA-F]{2}-[\dA-F]{2}-[\dA-F]{2})', interface)
                 if mac_match:
                     mac_addresses[interface_name] = mac_match.group(1).replace('-', ':')
-        except:
+        except Exception:
             pass
     
     # Get more detailed info on macOS/Linux
@@ -140,24 +165,43 @@ def get_mac_address() -> Dict[str, str]:
                     mac_match = re.search(r'ether ([\da-f]{2}:[\da-f]{2}:[\da-f]{2}:[\da-f]{2}:[\da-f]{2}:[\da-f]{2})', interface)
                     if mac_match:
                         mac_addresses[interface_name] = mac_match.group(1)
-        except:
+        except Exception:
             pass
     
     return mac_addresses
 
-def get_network_info() -> Dict[str, any]:
+def get_network_info() -> Dict[str, Any]:
     """
     Get comprehensive network information including hostname, IP addresses, and MAC addresses.
     
     Returns:
         dict: Dictionary containing all network information
     """
-    return {
-        "hostname": get_hostname(),
-        "ip_addresses": get_ip_address(),
-        "mac_addresses": get_mac_address()
-    }
-
+    try:
+        return {
+            "hostname": get_hostname(),
+            "ip_addresses": get_ip_address(),
+            "mac_addresses": get_mac_address()
+        }
+    except Exception as e:
+        # Provide fallback information if any part fails
+        result = {}
+        try:
+            result["hostname"] = get_hostname()
+        except Exception:
+            result["hostname"] = "unknown"
+        
+        try:
+            result["ip_addresses"] = get_ip_address()
+        except Exception:
+            result["ip_addresses"] = {"primary": "127.0.0.1"}
+            
+        try:
+            result["mac_addresses"] = get_mac_address()
+        except Exception:
+            result["mac_addresses"] = {"primary": "00:00:00:00:00:00"}
+            
+        return result
 def get_active_interface() -> Tuple[Optional[str], Optional[str]]:
     """
     Get the IP and MAC address of the currently active network interface.

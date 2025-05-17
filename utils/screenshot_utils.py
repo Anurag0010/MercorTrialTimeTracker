@@ -126,26 +126,76 @@ def check_screenshot_permission():
         print(f"Screenshot permission check failed: {str(e)}")
         return False
 
-def compress_screenshot(screenshot_path, quality=70):
+def compress_screenshot(screenshot_path, quality=70, max_retries=3):
     """
     Compress a screenshot to reduce file size.
     
     Args:
         screenshot_path (str): Path to the screenshot file to compress
         quality (int): JPEG quality (1-100, lower means more compression)
+        max_retries (int): Maximum number of compression attempts if errors occur
         
     Returns:
         str: Path to the compressed screenshot file
     """
+    if not os.path.exists(screenshot_path):
+        print(f"Cannot compress - file not found: {screenshot_path}")
+        return screenshot_path
+        
+    output_path = os.path.splitext(screenshot_path)[0] + "_compressed.jpg"
+    
+    # Try multiple times in case of file access issues
+    for attempt in range(max_retries):
+        try:
+            # Open the original PNG screenshot
+            img = Image.open(screenshot_path)
+            
+            # Create a compressed version with JPEG format
+            img.convert('RGB').save(output_path, 'JPEG', quality=quality, optimize=True)
+            
+            # Verify the file was created successfully
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                print(f"Successfully compressed screenshot to {output_path}")
+                return output_path
+            else:
+                print(f"Compression failed - output file is empty or not created")
+                
+        except PermissionError as pe:
+            print(f"Permission error while compressing (attempt {attempt+1}/{max_retries}): {str(pe)}")
+            time.sleep(0.5)  # Wait before retrying
+        except IOError as ioe:
+            print(f"IO error while compressing (attempt {attempt+1}/{max_retries}): {str(ioe)}")
+            time.sleep(0.5)  # Wait before retrying
+        except Exception as e:
+            print(f"Error compressing screenshot (attempt {attempt+1}/{max_retries}): {str(e)}")
+            time.sleep(0.3)  # Short delay before retry
+    
+    print(f"All compression attempts failed, returning original screenshot")
+    return screenshot_path  # Return original path if all compression attempts fail
+
+def get_monitor_info():
+    """
+    Get information about available monitors.
+    
+    Returns:
+        list: List of dictionaries containing monitor information 
+             (index, width, height, left, top)
+    """
     try:
-        # Open the original PNG screenshot
-        img = Image.open(screenshot_path)
-        
-        # Create a compressed version with JPEG format
-        output_path = os.path.splitext(screenshot_path)[0] + "_compressed.jpg"
-        img.convert('RGB').save(output_path, 'JPEG', quality=quality, optimize=True)
-        
-        return output_path
+        with mss.mss() as sct:
+            monitors = []
+            # Monitor 0 is a special case that represents the entire virtual screen
+            # So we start from index 1 for actual physical monitors
+            for i, monitor in enumerate(sct.monitors[1:], 1):
+                monitors.append({
+                    'index': i,
+                    'width': monitor['width'],
+                    'height': monitor['height'],
+                    'left': monitor['left'],
+                    'top': monitor['top']
+                })
+            return monitors
     except Exception as e:
-        print(f"Error compressing screenshot: {str(e)}")
-        return screenshot_path  # Return original path if compression fails
+        print(f"Error getting monitor information: {str(e)}")
+        # Return a fallback single monitor if detection fails
+        return [{'index': 1, 'width': 1920, 'height': 1080, 'left': 0, 'top': 0}]

@@ -70,6 +70,20 @@ class MainWindow(QMainWindow):
         """Handle when a task is selected in ProjectWindow and start timer."""
         project = selection.get('project')
         task = selection.get('task')
+        
+        # Check if we already have a timer window in the stack
+        timer_windows = [
+            self.stacked_widget.widget(i) 
+            for i in range(self.stacked_widget.count()) 
+            if isinstance(self.stacked_widget.widget(i), TimerWindow)
+        ]
+        
+        # Remove old timer windows to prevent memory leaks
+        for old_timer in timer_windows:
+            self.stacked_widget.removeWidget(old_timer)
+            if hasattr(old_timer, 'deleteLater'):
+                old_timer.deleteLater()
+    
         self.timer_window = TimerWindow(project_data={'project': project, 'task': task}, api_service=self.api_service)
         # Connect the switch_task signal from timer window
         self.timer_window.switch_task.connect(self.handle_switch_task)
@@ -81,6 +95,21 @@ class MainWindow(QMainWindow):
     def show_timer_window(self, project_data):
         """Show timer window for the selected task"""
         print(f"Starting timer for {project_data}")
+        
+        # Check if we already have a timer window in the stack
+        timer_windows = [
+            self.stacked_widget.widget(i) 
+            for i in range(self.stacked_widget.count()) 
+            if isinstance(self.stacked_widget.widget(i), TimerWindow)
+        ]
+        
+        # Remove old timer windows to prevent memory leaks
+        for old_timer in timer_windows:
+            self.stacked_widget.removeWidget(old_timer)
+            if hasattr(old_timer, 'deleteLater'):
+                old_timer.deleteLater()
+    
+        # Create new timer window
         self.timer_window = TimerWindow(project_data, api_service=self.api_service)
         # Connect the switch_task signal from timer window
         self.timer_window.switch_task.connect(self.handle_switch_task)
